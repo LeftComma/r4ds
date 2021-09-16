@@ -51,7 +51,6 @@ table3
 table4a
 table4b
 
-
 # 2. Compute rate for table 2, 3, 4a, 4b. To do this:
 #   Extract number of TB cases per year
 #   Extract the matching population per country per year
