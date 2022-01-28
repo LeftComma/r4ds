@@ -118,6 +118,7 @@ dmonths(1)
 # This I struggled to figure out as well
 # I think it's essentially a filter. It's adding 1 day, but only to values that appear in the
 #   overnight column.
+# This is because overnight is a TRUE or FALSE boolean variable
 
 # 3. Create a vector of dates giving the first day of every month in 2015. 
 #   Create a vector of dates giving the first day of every month in the current year.
@@ -130,13 +131,22 @@ start_current <- make_date(year = year_current, month = 1, day = 1)
 dates_current <- start_current + months(0:11)
 dates_current
 
+# The way he does it:
+# Floor date rounds down to a certain unit
+floor_date(today(), unit = "year") + months(0:11)
+
 # 4. Write a function that given your birthday (as a date), returns how old you are in years.
-birthday <- ymd(19990508)
-years_old <- (birthday %--% today()) %/% years(1)
-years_old
+
+years_old <- function(birthday) {
+  (birthday %--% today()) %/% years(1)
+}
+
+years_old(ymd(19990508))
 
 # 5. Why can't (today() %--% (today() + years(1))) / months(1) work?
-# It does work now...
+# It works but sometimes gives the wrong result, because months aren't an exact length of time
 (today() %--% (today() + years(1))) / months(1)
 
+# To find the number of months in an interval, you're meant to use %/% instead
+(today() %--% (today() + years(1))) %/% months(1)
 
