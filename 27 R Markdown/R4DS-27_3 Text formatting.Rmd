@@ -1,0 +1,131 @@
+---
+title: "R4DS 27_3 Text formatting"
+author: "Gabriel"
+date: "09/03/2022"
+output: html_document
+---
+
+This set of files are probably going to be done in R Markdown
+
+Markdown is easy to read, write, and learn. Below is a quide of the Pandoc's
+Markdown, which extends the basic R Markdown
+
+Text formatting 
+------------------------------------------------------------
+
+*italic*  or _italic_,
+**bold** or  __bold__,
+`code`,
+superscript^2^ and subscript~2~,
+
+Headings
+------------------------------------------------------------
+
+# 1st Level Header
+
+## 2nd Level Header
+
+### 3rd Level Header
+
+Lists
+------------------------------------------------------------
+
+*   Bulleted list item 1
+
+*   Item 2
+
+    * Item 2a
+
+    * Item 2b
+
+1.  Numbered list item 1
+
+1.  Item 2. The numbers are incremented automatically in the output.
+
+Links and images
+------------------------------------------------------------
+
+<http://example.com>
+
+[linked phrase](http://example.com)
+
+![optional caption text](../example_image.jpg)
+
+Tables 
+------------------------------------------------------------
+
+First Header  | Second Header
+------------- | -------------
+Content Cell  | Content Cell
+Content Cell  | Content Cell
+
+
+Questions
+------------------------------------------------------------
+### 1. Practice what you’ve learned by creating a brief CV. The title should be your name, and you should include headings for (at least) education or employment. Each of the sections should include a bulleted list of jobs/degrees. Highlight the year in bold.
+
+Gabriel Mackie
+------------------------------------------------------------
+
+## Education
+### Twyford C of E High School
+- 3 A* and 8 As at GCSE
+- AAB A levels in Maths, Economics, and Photography. B in Chemistry AS and A in EPQ
+
+### University of York
+Integrated Master in Psychology, specialising in Neuroscience and Neuroimaging
+
+## Employment
+### Research Assistant, UoY Dep of Psychology - **Summer 2019**
+*	Oversaw data collection in an experiment for one of Dr Barraclough’s PhD students.
+*	Set-up the equipment, organised the participants and recorded the data.
+*	Learnt about experimental design in an unfamiliar area of psychology: emotional responses to music. 
+*	Enjoyed getting to grips with different ways of undertaking research, and the specific equipment and programs used to record subjective and physical responses.
+*	Worked well with the participants, helping them to understand the experiment, solved problems that arose and ensured they had an enjoyable experience. This involved being friendly, helpful, and capable.
+
+### Chalet Host, Ski Beat - **Winter 2017/8**
+*	Managed a chalet of 11 guests single-handedly, operating independently on a day-to-day basis. This involved being highly self-motivated, whilst also operating flexibly within the larger team in the resort. I learnt how to coordinate well with colleagues whilst being responsible for my own chalet without needing constant supervision.
+*	Dealt with guest’s queries and issues, developing my skills as an active listener and communicator.
+*	Planned, ordered, cooked, and served meals, which required excellent time management and organisation skills. I embraced challenging situations like cooking Christmas dinner for 12 while accommodating three separate food allergies.
+*	Learnt how to work under intense conditions and adapt quickly and effectively to changing circumstances e.g., snowstorms delaying food delivery.
+
+## 2. Using the R Markdown quick reference, figure out how to:
+### A) Add a footnote
+
+The quick brown fox jumped over the lazy dog.[^quick-fox]
+
+### B) Add a horizontal rule
+
+---
+
+### C) Add a block quote
+> Life is a journey. Time is a river. The door is ajar
+>
+> --- Harry Dresden
+
+
+[^quick-fox]: This is an example of a footnote. The sentence this is footnoting
+  is often used for displaying fonts because it includes all 26 letters of the
+  English alphabet.
+
+## 3. Copy and paste the contents of diamond-sizes.Rmd from https://github.com/hadley/r4ds/tree/master/rmarkdown in to a local R markdown document. Check that you can run it, then add text after the frequency polygon that describes its most striking features
+
+```{r setup, include = FALSE}
+library(ggplot2)
+library(dplyr)
+smaller <- diamonds |> 
+  filter(carat <= 2.5)
+```
+
+We have data about `r nrow(diamonds)` diamonds. Only 
+`r nrow(diamonds) - nrow(smaller)` are larger than
+2.5 carats. The distribution of the remainder is shown
+below:
+
+```{r, echo = FALSE}
+smaller |> 
+  ggplot(aes(carat)) + 
+  geom_freqpoly(binwidth = 0.01)
+```
+
+The most striking thing about the graph is how many diamonds are given round(ish) carats, clustered around common fractions like 0.5
