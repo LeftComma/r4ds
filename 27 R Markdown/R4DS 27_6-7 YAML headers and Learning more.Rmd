@@ -1,0 +1,122 @@
+---
+title: "R4DS 27_6 YAML header"
+author: "Gabriel"
+date: "12/04/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# YAML Headers
+
+You can control the whole document by adjusting the YAML headers
+
+## Parameters
+
+Parameters are useful because they let you re-render entire documents with a key variable changed. This could be useful if you wanted to generate a report for say, each student in a class.
+
+The params field lets you set parameters
+
+For example, the following setup would let you create a report for each class of car quite easily
+---
+output: html_document
+params:
+  my_class: "suv"
+---
+
+```{r setup, include = FALSE}
+library(ggplot2)
+library(dplyr)
+
+class <- mpg %>% filter(class == params$my_class)
+```
+
+### Fuel economy for `r params$my_class`s
+
+```{r, message = FALSE}
+ggplot(class, aes(displ, hwy)) + 
+  geom_point() + 
+  geom_smooth(se = FALSE)
+```
+
+You can also run R expressions as parameters if you put !r first, this can be helpful for things like setting dates and times:
+
+params:
+  start: !r lubridate::ymd("2015-01-01")
+  snapshot: !r lubridate::ymd_hms("2015-01-01 12:30:00")
+
+RStudio has the option to "Knit with Parameters" in the Knit dropdown menu. This is a user-friendly way to generate reports with different parameters.
+In code, you can call a function to do it: 
+
+```{r}
+rmarkdown::render("fuel-economy.Rmd", params = list(my_class = "suv"))
+```
+
+This can be combined with purrr::pwalk(), for example to generate a report for each value of class in mpg:
+
+```{r}
+# Create a data frame with one row for each class, with the filename and the params
+reports <- tibble(
+  class = unique(mpg$class),
+  filename = stringr::str_c("fuel-economy-", class, ".html"),
+  params = purrr::map(class, ~ list(my_class = .))
+)
+reports
+
+# Then use purrr's parallel walk to call render once for each row
+reports %>%
+  select(output_file = filename, params) %>% 
+  purrr::pwalk(rmarkdown::render, input = "fuel-economy.Rmd")
+```
+
+## Bibliographies and Citations
+Pandoc can generate citations and bibliographies in several styles. First you specify a bibliography file, containing the paths from the directory that contains the .Rmd file:
+
+bibliography: rmarkdown.bib
+
+Then to create a citation you use @ + the citation identifier you've setup in the bibliography file.
+
+Inside brackets might look like this:
+Separate multiple citations with a `;`: Blah blah [@smith04; @doe99].
+
+You can add arbitrary comments inside the square brackets: 
+Blah blah [see @doe99, pp. 33-35; also @smith04, ch. 1].
+
+Remove the square brackets to create an in-text citation: @smith04 
+says blah, or @smith04 [p. 33] says blah.
+
+Add a `-` before the citation to suppress the author's name: 
+Smith says blah [-@smith04].
+
+When the file is rendered, it will build and append a bibliography. The one thing it doesn't do is create a heading, so it's good to end it with # References
+
+You can change the citation stle by referencing a citation style language (CSL). This is a file which you also have to specify the path to.
+
+bibliography: rmarkdown.bib
+csl: american-physiological-society.csl 
+
+Common CSLs can be found here: http://github.com/citation-style-language/styles.
+
+**There's a way to integrate this with Zotero but I don't know how yet**
+https://christopherjunk.netlify.app/blog/2019/02/25/zotero-rmarkdown/
+https://gsverhoeven.github.io/post/zotero-rmarkdown-csl/
+https://dewey.dunnington.ca/post/2020/getting-started-zotero-better-bibtex-rmarkdown/
+
+# Learning more
+
+R Markdown is young and growing rapidly, the best place to keep up is http://rmarkdown.rstudio.com
+
+He hasn't touched at all on collaberating and style
+
+Collaberation often involves version control, and he recommends two places to learn git:
+- Happy Git with R http://happygitwithr.com
+- Git and Github chapter of R Packages http://r-pkgs.had.co.nz/git.html
+
+For style he's recommend either (or both!):
+- _Style: Lessons in Clarity and Grace_ by Joseph M. Williams & Joseph Bizup
+- _The Sense of Structure: Writing from the Reader’s Perspective_ by George Gopen
+
+Both can probably be found relatively cheaply second-hand
+George Gopen also has some articles, aimed at lawyers but also applies to data scientists https://www.georgegopen.com/the-litigation-articles.html

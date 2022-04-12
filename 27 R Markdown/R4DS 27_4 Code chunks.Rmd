@@ -1,0 +1,236 @@
+---
+title: "R4DS 27_4 Code chunks"
+author: "Gabriel"
+date: "20/03/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+There are three ways to add code chunks:
+* Ctrl + Alt + I
+* The "Insert" button icon in the toolbar
+* By manually typing the chunk delimiters ```{r} and ```
+
+Ctrl + Shift + Enter runs all the code in a chunk
+
+### Chunk names
+
+Naming chunks lets you navigate through them more easily, the graphics produced will be given useful names, and you can set up networks of chunks
+
+### Chunk options
+
+These are arguments that can be supplied to the header, and customises the chunks.
+Knitr gives around 60 options http://yihui.name/knitr/options/
+
+The most important are:
+- eval = FALSE prevents code from being evaluated. This is useful for displaying example code, or for disabling a large block of code without commenting each line.
+- include = FALSE runs the code, but doesn’t show the code or results in the final document. Use this for setup code that you don’t want cluttering your report.
+- echo = FALSE prevents code, but not the results from appearing in the finished file. Use this when writing reports aimed at people who don’t want to see the underlying R code.
+- message = FALSE or warning = FALSE prevents messages or warnings from appearing in the finished file.
+- results = 'hide' hides printed output; fig.show = 'hide' hides plots.
+- error = TRUE causes the render to continue even if code returns an error. This is rarely something you’ll want to include in the final version of your report, but can be very useful if you need to debug exactly what is going on inside your .Rmd. It’s also useful if you’re teaching R and want to deliberately include an error. The default, error = FALSE causes knitting to fail if there is a single error in the document.
+
+### Table
+
+By default, Markdown prints data frames as you'd see them in the console
+
+knitr::kable is a function that provides additional formatting
+``` {r table example}
+knitr::kable(
+  mtcars[1:5, ], 
+  caption = "A knitr kable."
+)
+```
+
+The docs for ?knitr::kable gives you customise details
+Other modules like xtable, stargazer, pander, tables and ascii give even deeper customisation
+
+### Caching
+
+Each knit of a document usually starts from a blank slate. This is good for reproducibility but bad if you have long computations you need to do every time. cache = TRUE saves the output of a chunk, then it checks if the code has changed since being saved, if not it just loads it back in.
+
+However, when a chunk is saved it only saves that chunk. This can cause issues if that chunk depends on previous ones, as these are not saved. You can fix this with the dependson option, that looks like this:
+```{r raw_data}
+#rawdata <- readr::read_csv("a_very_large_file.csv")
+```
+
+dependson takes a character vector of every chunk that the cached one depends on
+```{r processed_data, cache = TRUE, dependson = "raw_data"}
+#processed_data <- rawdata %>% 
+#  filter(!is.na(import_var)) %>% 
+#  mutate(new_variable = complicated_transformation(x, y, z))
+```
+
+If you want a cached chunk to change if a file it uses changes, cache.extra breaks a cache when it changes. Setting it to file.info() gives you a report of what changed with the file, like this
+```{r raw_data, cache.extra = file.info("a_very_large_file.csv")}
+#rawdata <- readr::read_csv("a_very_large_file.csv")
+```
+
+knitr::clean_cache() clears all caches
+
+He recommends naming the chunks after the primary object it generates
+
+### Global options
+Calling knitr::opts_chunk$set() in a chunk lets you change the global options for the document
+
+He does this for writing books:
+```{r}
+knitr::opts_chunk$set(
+  comment = "#>",
+  collapse = TRUE
+)
+```
+It keeps code and output closely together, and uses the comment style he likes
+
+
+And you might do this for writing reports:
+```{r}
+knitr::opts_chunk$set(
+  echo = FALSE
+)
+```
+This hides code by default, only showing ones with echo = TRUE
+
+### Inline code
+When you're talking about properties of your data you can create inline code segments that can auto adjust with `r code`. This means you can talk about `r nrow(diamonds)` or something and it would evaluate to 53940
+
+format() is also really useful when you're inserting numbers into text
+```{r format function}
+comma <- function(x) format(x, digits = 2, big.mark = ",")
+comma(3452345)
+comma(.12358124331)
+```
+
+
+## Questions
+### 1. Add a section that explores how diamond sizes vary by cut, colour, and clarity. Assume you’re writing a report for someone who doesn’t know R, and instead of setting echo = FALSE on each chunk, set a global option.
+### 2. Download diamond-sizes.Rmd from https://github.com/hadley/r4ds/tree/master/rmarkdown. Add a section that describes the largest 20 diamonds, including a table that displays their most important attributes.
+### 3. Modify diamonds-sizes.Rmd to use comma() to produce nicely formatted output. Also include the percentage of diamonds that are larger than 2.5 carats.
+
+All three are answered below:
+
+```{r knitr_opts, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r setup, message = FALSE}
+library("ggplot2")
+library("dplyr")
+```
+
+```{r}
+smaller <- diamonds %>%
+  filter(carat <= 2.5)
+```
+
+```{r include = FALSE, purl = FALSE}
+# Hide objects and functions ONLY used inline
+n_larger <- nrow(diamonds) - nrow(smaller)
+pct_larger <- n_larger / nrow(diamonds) * 100
+
+comma <- function(x) {
+  format(x, digits = 2, big.mark = ",")
+}
+```
+
+## Size and Cut, Color, and Clarity
+
+Diamonds with lower quality cuts (cuts are ranked from "Ideal" to "Fair") tend 
+to be be larger.
+```{r}
+ggplot(diamonds, aes(y = carat, x = cut)) +
+  geom_boxplot()
+```
+Likewise, diamonds with worse color (diamond colors are ranked from J (worst)
+to D (best)) tend to be larger:
+
+```{r}
+ggplot(diamonds, aes(y = carat, x = color)) +
+  geom_boxplot()
+```
+
+The pattern present in cut and color is also present in clarity. Diamonds with 
+worse clarity  (I1 (worst), SI1, SI2, VS1, VS2, VVS1, VVS2, IF (best)) tend to
+be larger:
+
+```{r}
+ggplot(diamonds, aes(y = carat, x = clarity)) +
+  geom_boxplot()
+```
+
+These patterns are consistent with there being a profitability threshold for 
+retail diamonds that is a function of carat, clarity, color, cut and other 
+characteristics. A diamond may be profitable to sell if a poor value of one
+feature, for example, poor clarity, color, or cut, is be offset by a good value
+of another feature, such as a large size. This can be considered an example
+of [Berkson's paradox](https://en.wikipedia.org/wiki/Berkson%27s_paradox).
+
+## Largest Diamonds
+
+We have data about `r comma(nrow(diamonds))` diamonds. Only
+`r n_larger` (`r round(pct_larger, 1)`%) are larger
+than 2.5 carats. The distribution of the remainder is shown below:
+
+```{r}
+smaller %>%
+  ggplot(aes(carat)) +
+  geom_freqpoly(binwidth = 0.01)
+```
+
+The frequency distribution of diamond sizes is marked by spikes at
+whole-number and half-carat values, as well as several other carat values
+corresponding to fractions.
+
+The largest twenty diamonds (by carat) in the datasets are,
+
+```{r results = "asis"}
+diamonds %>%
+  arrange(desc(carat)) %>%
+  slice(1:20) %>%
+  select(carat, cut, color, clarity) %>%
+  knitr::kable(
+    caption = "The largest 20 diamonds in the `diamonds` dataset."
+  )
+```
+
+Most of the twenty largest datasets are in the lowest clarity category ("I1"),
+with one being in the second best category ("VVS2") The top twenty diamonds 
+have colors ranging from the worst, "J", to best, "D",categories, though most
+are in the lower categories "J" and "I". The top twenty diamonds are more evenly
+distributed among the cut categories, from "Fair" to "Ideal", although the worst
+category (Fair) is the most common.
+
+### 4. Set up a network of chunks where d depends on c and b, and both b and c depend on a. Have each chunk print lubridate::now(), set cache = TRUE, then verify your understanding of caching.
+The chunk `a` has no dependencies.
+```{r a}
+print(lubridate::now())
+x <- 1
+```
+
+The chunk `b` depends on `a`.
+```{r b, dependson = c("a")}
+print(lubridate::now())
+y <- x + 1
+```
+
+The chunk `c` depends on `a`.
+```{r c, dependson = c("a")}
+print(lubridate::now())
+z <- x * 2
+```
+
+The chunk `d` depends on `c` and `b`:
+```{r d, dependson = c("c", "b")}
+print(lubridate::now())
+w <- y + z
+```
+
+If this document is knit repeatedly, the value  printed by `lubridate::now()` 
+will be the same for all chunks, and the same as the first time the document
+was run with caching.
+

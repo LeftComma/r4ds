@@ -1,0 +1,27 @@
+---
+title: "R4DS 27_5 Troubleshooting"
+author: "Gabriel"
+date: "12/04/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Troubleshooting can be tricky because you're not in an interactive environment anymore
+
+First you should try to recreate the problem, restarting R and running all chunks again (Ctrl + Alt + R). Hopefully that will recreate the issue and then you'll be able to use the interactive R console to figure out what was going wrong.
+
+Otherwise, issues might be between the interactive environment and the markdown environment.
+
+The working directory for markdown files is the directory it's in. You can check it's what you expect with getwd()
+
+```{r}
+getwd()
+```
+
+Then you'd systematically go through things that might be causing the bug, and that're different between your interactive and markdown session
+
+The easiest way to do that is to set error = TRUE on the chunk and then use print() and str() to check if everything makes sense.
+
