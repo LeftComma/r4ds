@@ -23,6 +23,7 @@ ggplot(sim1, aes(x)) +
   geom_line(aes(y = pred), data = grid, colour = "red", size = 1)
 
 
+## Residuals
 
 
 
