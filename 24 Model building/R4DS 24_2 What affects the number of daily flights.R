@@ -4,6 +4,7 @@ options(na.action = na.warn)
 
 library(nycflights13)
 library(lubridate)
+library(broom)
 
 # We're going to try and work out what affects the number of flights on a particular day
 daily <- flights %>% 
@@ -197,7 +198,154 @@ daily %>%
 # with different groups. It's also a Saturday, so may be particularly high because Saturdays are usually low
 # They will all likely change to a degree year by year, to be on weekends in roughly the same spot
 
-# 3. Create a new variable that splits the wday variable into terms, but only for Saturdays, ]
-# i.e. it should have Thurs, Fri, but Sat-summer, Sat-spring, Sat-fall. How does this model compare with the 
+# 3. Create a new variable that splits the wday variable into terms, but only for Saturdays,
+# i.e. it should have Thurs, Fri, but Sat-summer, Sat-spring, Sat-fall. How does this model compare with the 
 # model with every combination of wday and term?
+# One way to do that is using case_when()
+daily <- daily %>%
+  mutate(
+    wday2 =
+      case_when(
+        wday == "Sat" & term == "summer" ~ "Sat-summer",
+        wday == "Sat" & term == "fall" ~ "Sat-fall",
+        wday == "Sat" & term == "spring" ~ "Sat-spring",
+        TRUE ~ as.character(wday)
+      )
+  )
 
+# Then fit a new model and plot the new and old
+mod3 <- lm(n ~ wday2, data = daily)
+
+daily %>%
+  gather_residuals(sat_term = mod3, all_interact = mod2) %>%
+  ggplot(aes(date, resid, colour = model)) +
+  geom_line(alpha = 0.75)
+
+# It might be easier to see the differences by plotting the differences directly
+# spread_residuals() adds residuals as seperate columns
+daily %>%
+  spread_residuals(sat_term = mod3, all_interact = mod2) %>%
+  mutate(resid_diff = sat_term - all_interact) %>%
+  ggplot(aes(date, resid_diff)) +
+  geom_line(alpha = 0.75)
+# The model with terms × Saturday has higher residuals in the fall and lower residuals in the spring 
+# than the model with all interactions.
+
+glance(mod3) %>% select(r.squared, sigma, AIC, df)
+glance(mod2) %>% select(r.squared, sigma, AIC, df)
+# mod3 has a lower R-squared, meaning it explains less of the variance
+# It also has a higher AIC, implying a greater amount of error
+
+
+# 4. Create a new wday variable that combines the day of week, term (for Saturdays), 
+# and public holidays. What do the residuals of that model look like?
+# Lets make something with Federal US holidays
+holidays_2013 <-
+  tribble(
+    ~holiday, ~date,
+    "New Year's Day", 20130101,
+    "Martin Luther King Jr. Day", 20130121,
+    "Washington's Birthday", 20130218,
+    "Memorial Day", 20130527,
+    "Independence Day", 20130704,
+    "Labor Day", 20130902,
+    "Columbus Day", 20131028,
+    "Veteran's Day", 20131111,
+    "Thanksgiving", 20131128,
+    "Christmas", 20131225
+  ) %>%
+  mutate(date = lubridate::ymd(date))
+
+# Lets also define the days before and after the holiday, because they might have abnormal travel
+daily <- daily %>%
+  mutate(
+    wday3 =
+      case_when(
+        date %in% (holidays_2013$date - 1L) ~ "day before holiday",
+        date %in% (holidays_2013$date + 1L) ~ "day after holiday",
+        date %in% holidays_2013$date ~ "holiday",
+        .$wday == "Sat" & .$term == "summer" ~ "Sat-summer",
+        .$wday == "Sat" & .$term == "fall" ~ "Sat-fall",
+        .$wday == "Sat" & .$term == "spring" ~ "Sat-spring",
+        TRUE ~ as.character(.$wday)
+      )
+  )
+
+mod4 <- lm(n ~ wday3, data = daily)
+
+# Adding holidays seemed to make residuals a lot higher on certain days, but lower on others
+# From visual inspection, I think this is a case of the days before thing causing issues
+daily %>%
+  gather_residuals(sat_term = mod3, holidays = mod4) %>%
+  ggplot(aes(date, resid, colour = model)) +
+  geom_line(alpha = 0.75)
+
+# Comparing the residuals shows some times when the holidays residuals were far higher
+daily %>%
+  spread_residuals(resid_sat_terms = mod3, resid_holidays = mod4) %>%
+  mutate(resid_diff = resid_holidays - resid_sat_terms) %>%
+  ggplot(aes(date, resid_diff)) +
+  geom_line(alpha = 0.75)
+
+
+# 5. What happens if you fit a day of week effect that varies by month (i.e., n ~ wday * month)? 
+# Why is this not very helpful?
+daily <- mutate(daily, month = factor(lubridate::month(date)))
+mod6 <- lm(n ~ wday * month, data = daily)
+print(summary(mod6))
+# A days x month model will have 12 * 7 = 84 parameters
+# Eeach month's data is only based on a few weeks, with large standard error and little generalisability
+
+
+# 6. What would you expect the model n ~ wday + ns(date, 5) to look like? 
+# Knowing what you know about the data, why would you expect it to be not particularly effective?
+# This model doesn't involve interaction between day of the week and long-term trends
+# Which might make it rather ineffective
+# Lets model both with and without interaction
+mod7 <- lm(n ~ wday + ns(date, 5), data = daily)
+mod8 <- lm(n ~ wday * ns(date, 5), data = daily)
+
+daily %>%
+  gather_residuals(mod7, mod8) %>%
+  ggplot(aes(x = date, y = resid, color = model)) +
+  geom_line(alpha = 0.75)
+# Without interaction has larger residuals, and has more overestimation in the summer and underestimation in the autumn
+
+# 7. We hypothesized that people leaving on Sundays are more likely to be business travelers who need to be somewhere on Monday. 
+# Explore that hypothesis by seeing how it breaks down based on distance and time: if it's true, you'd expect to see more Sunday 
+# evening flights to places that are far away.
+flights %>%
+  mutate(
+    date = make_date(year, month, day),
+    wday = wday(date, label = TRUE)
+  ) %>%
+  ggplot(aes(y = distance, x = wday)) +
+  geom_boxplot() +
+  labs(x = "Day of Week", y = "Average Distance")
+# Sunday has the second-longest ave flights, after Saturday, implying the Sunday idea is true
+# Sat may have long flights because it has fewer short-haul commuter flights
+
+# It is slightly hard to see though because of the outliers
+# A pointrange might work better
+flights %>%
+  mutate(
+    date = make_date(year, month, day),
+    wday = wday(date, label = TRUE)
+  ) %>%
+  ggplot(aes(y = distance, x = wday)) +
+  stat_summary() +
+  labs(x = "Day of Week", y = "Average Distance")
+
+
+# 8. It's a little frustrating that Sunday and Saturday are on separate ends of the plot. 
+# Write a small function to set the levels of the factor so that the week starts on Monday.
+# fct_relevel() is in the factors chapter
+monday_first <- function(x) {
+fct_relevel(x, levels(x)[-1])
+}
+
+daily <- daily %>%
+  mutate(wday = wday(date, label = TRUE))
+ggplot(daily, aes(monday_first(wday), n)) +
+  geom_boxplot() +
+  labs(x = "Day of Week", y = "Number of flights")
