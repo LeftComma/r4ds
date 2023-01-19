@@ -2,7 +2,9 @@
 title: "R4DS 27_4 Code chunks"
 author: "Gabriel"
 date: "20/03/2022"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -54,7 +56,7 @@ Other modules like xtable, stargazer, pander, tables and ascii give even deeper 
 
 Each knit of a document usually starts from a blank slate. This is good for reproducibility but bad if you have long computations you need to do every time. cache = TRUE saves the output of a chunk, then it checks if the code has changed since being saved, if not it just loads it back in.
 
-However, when a chunk is saved it only saves that chunk. This can cause issues if that chunk depends on previous ones, as these are not saved. You can fix this with the dependson option, that looks like this:
+However, when a chunk is saved it only saves that chunk. This can cause issues if that chunk depends on previous ones, as these are not saved. You can fix this with the depends on option, that looks like this:
 ```{r raw_data}
 #rawdata <- readr::read_csv("a_very_large_file.csv")
 ```
@@ -67,7 +69,7 @@ dependson takes a character vector of every chunk that the cached one depends on
 ```
 
 If you want a cached chunk to change if a file it uses changes, cache.extra breaks a cache when it changes. Setting it to file.info() gives you a report of what changed with the file, like this
-```{r raw_data, cache.extra = file.info("a_very_large_file.csv")}
+```{r raw_data2, cache.extra = file.info("a_very_large_file.csv")}
 #rawdata <- readr::read_csv("a_very_large_file.csv")
 ```
 
@@ -118,7 +120,7 @@ All three are answered below:
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-```{r setup, message = FALSE}
+```{r setup2, message = FALSE}
 library("ggplot2")
 library("dplyr")
 ```
