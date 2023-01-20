@@ -1,0 +1,26 @@
+---
+title: "R Markdown Workflow"
+author: "Gabriel"
+date: "2023-01-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Markdown can be great for analysis notebooks because it lets you share your thoughts alongside your code. It helps you remember your thoughts, reflect on them, write up your analysis and share it with others.
+
+http://colinpurrington.com/tips/lab-notebooks and r4ds have come up with some tips for using Markdown for analysis notebooks:
+- Ensure each notebook has a descriptive title, an evocative filename, and a first paragraph that briefly describes the aims of the analysis
+- Use the YAML header date to record when you first started working on the notebook
+```{r}
+date: 2023-01-20
+```
+Use ISO8601 YYYY-MM-DD format so that’s there no ambiguity. Use it even if you don’t normally write dates that way!
+- Don't delete analysis that turned out to be useless! Write a note on why it failed and leave it in. This can help you in the future with other analyses that might turn out the same way.
+- Generally, you’re better off doing data entry outside of R. But if you do need to record a small snippet of data, clearly lay it out using tibble::tribble()
+- If you discover an error in a data file, never modify it directly, but instead write code to correct the value. Explain why you made the fix
+- Before you finish for the day, make sure you can knit the notebook (if you’re using caching, make sure to clear the caches). That will let you fix any problems while the code is still fresh in your mind
+- If you want your code to be reproducible in the long-run (i.e. so you can come back to run it next month or next year), you’ll need to track the versions of the packages that your code uses. A rigorous approach is to use packrat, http://rstudio.github.io/packrat/, which stores packages in your project directory, or checkpoint, https://github.com/RevolutionAnalytics/checkpoint, which will reinstall packages available on a specified date. A quick and dirty hack is to include a chunk that runs sessionInfo() — that won’t let you easily recreate your packages as they are today, but at least you’ll know what they were
+- You are going to create many, many, many analysis notebooks over the course of your career. How are you going to organise them so you can find them again in the future? I recommend storing them in individual projects, and coming up with a good naming scheme
