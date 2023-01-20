@@ -1,0 +1,202 @@
+---
+title: "Markdown Formats"
+author: "Gabriel"
+date: "2023-01-20"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Markdown Formats
+
+We've done HTML, but markdown can create other types of output
+You can adjust this permenantly by modfying the YAML header
+
+Or by calling the render by hand:
+
+```{r}
+rmarkdown::render("diamond-sizes.Rmd", output_format = "word_document")
+```
+
+Or using the drop-down menu in RStudio
+
+## Output options
+
+Each output format is associated with a function. This can help you know how to set parameters. For example, the html_document parameters can be found with `?rmarkdown::html_document`.
+
+To override the default parameters, you need to expand the output field. This is what you'd do to make a html with a floating table of contents:
+
+```{r}
+output:
+  html_document:
+    toc: true
+    toc_float: true
+```
+
+Or you could also output to multiple formats
+
+```{r}
+output:
+  html_document:
+    toc: true
+    toc_float: true
+  pdf_document: default
+```
+
+But here you have to specify that you want the default options on the pdf.
+
+## Documents
+
+There are a range of default document types in R.
+
+- `html_document` makes an HTML as we've seen
+- `pdf_document` makes a PDF
+- `word_document` makes a MS Word document (.docx)
+- `rtf_document` for Rich Text Format (.rtf)
+- `md_document` for a Markdown file
+- `github_document` for a Markdown file specifically tailored for sharing on Github
+
+When sharing with others who don't need to see the code, you can turn off the default display of code in the setup chunk
+
+```{r}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+HTML documents can also have hidden code that is revealed with a click
+
+```{r}
+output:
+  html_document:
+    code_folding: hide
+```
+
+
+## Notebooks
+
+`html_notebook` is a variation on the HTML document. It's made for collaberating with others, so it contains the full source code. Unlike `html_document` which is made for sharing with decision makers, and so doesn't contain the code.
+
+Notebooks can be viewed in the web browser to view the output. Or it can be opened in RStudio, which recreates the .Rmd file that generated it.
+
+If using git and Github he recommends these as default outputs:
+
+```{r}
+output:
+  html_notebook: default
+  github_document: default
+```
+
+
+## Presentations
+
+Markdown can create simple presentations that can save a lot of time.
+
+Content is divided into slides, with each slide beginning with each first `#` or second `##` level header. Or you can add a new slide with no header using `***`
+
+There are 3 built in presentation formats:
+1. `ioslides_presentation` - HTML presentation with ioslides
+2. `slidy_presentation` - HTML presentation with W3C Slidy
+3. `beamer_presentation` - PDF presentation with LaTeX Beamer
+
+But there are packages with more options
+
+
+## Dashboards
+
+These can convey a lot of information quickly. Generally:
+- Each level 1 header begins a new page
+- Each level 2 header begins a new column
+- Each level 3 header begins a new row
+
+Flexdashboard has tools for side-bars, gagues, value boxes and other things. http://rmarkdown.rstudio.com/flexdashboard/
+
+
+## Interactivity
+
+HTML documents can contain interactive components
+
+### htmlwidgets
+
+An example here is the leaflet map, which lets you build an interactive map
+
+```{r}
+library(leaflet)
+leaflet() %>%
+  setView(174.764, -36.877, zoom = 16) %>% 
+  addTiles() %>%
+  addMarkers(174.764, -36.877, popup = "Maungawhau") 
+```
+
+And the package handles all the details. Others include:
+- *dygraphs*, http://rstudio.github.io/dygraphs/, for interactive time series visualisations
+- *DT*, http://rstudio.github.io/DT/, for interactive tables
+- *threejs*, https://github.com/bwlewis/rthreejs for interactive 3d plots
+- *DiagrammeR*, http://rich-iannone.github.io/DiagrammeR/ for diagrams (like flow charts and simple node-link diagrams)
+
+More can be found at  http://www.htmlwidgets.org/
+
+
+### Shiny
+htmlwidgets are interactive on the client side. It is built on what can be done in HTML and JavaScript
+
+shiny lets you use R to create interactivity. To do this you need to add `shiny` to the header
+
+```{r}
+title: "Shiny Web App"
+output: html_document
+runtime: shiny
+```
+
+Then you can use the input functions to add interactive components
+
+```{r}
+library(shiny)
+
+textInput("name", "What is your name?")
+numericInput("age", "How old are you?", NA, min = 0, max = 150)
+```
+
+Then you can refer to the values with `input$name` and `input$age` so the code can update each time it's run.
+
+Unfortunately, Shiny apps need a Shiny server to be run online. Running the apps on your own machine creates a server for you on the machine. But to share it you need a public server.
+
+Learn more about Shiny at http://shiny.rstudio.com/
+
+
+## Websites
+
+This can be done with only a little extra infrastructure:
+- Put the `.Rmd` fules in a single directory. `index.Rmd`. This will become the home page
+- Add a YAML file named `_site.yml` which provides the navigation to the site. E.g.:
+
+```{r}
+name: "my-website"
+navbar:
+  title: "My Website"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "Viridis Colors"
+      href: 1-example.html
+    - text: "Terrain Colors"
+      href: 3-inline.html
+```
+
+Execute `rmarkdown::render_site()` to build the `_site` which is a set of files which can be turned into a static website. Or if it's in an RStudio Project then RStudio will add a Build tab so you can build and preview your site.
+
+More at http://rmarkdown.rstudio.com/rmarkdown_websites.html
+
+
+## Other formats
+
+- The bookdown package, https://github.com/rstudio/bookdown, makes it easy to write books, like this one. To learn more, read Authoring Books with R Markdown, by Yihui Xie, which is, of course, written in bookdown. Visit http://www.bookdown.org to see other bookdown books written by the wider R community
+- The prettydoc package, https://github.com/yixuan/prettydoc/, provides lightweight document formats with a range of attractive themes
+- The rticles package, https://github.com/rstudio/rticles, compiles a selection of formats tailored for specific scientific journals
+
+## Learning more
+
+- To improve your presentation skills, I recommend Presentation Patterns, by Neal Ford, Matthew McCollough, and Nathaniel Schutta. It provides a set of effective patterns (both low- and high-level) that you can apply to improve your presentations
+- If you give academic talks, I recommend reading the Leek group guide to giving talks
+- If you are creating a lot of dashboards, make sure to read Stephen Few’s Information Dashboard Design: The Effective Visual Communication of Data. It will help you create dashboards that are truly useful, not just pretty to look at
+- Effectively communicating your ideas often benefits from some knowledge of graphic design. The Non-Designer’s Design Book is a great place to start
